@@ -1,0 +1,110 @@
+import { useState, useEffect, useMemo } from 'react';
+import { motion } from 'framer-motion';
+import { Command, Activity, Settings, TrendingUp, Layers2 } from 'lucide-react';
+import { BentoCard } from './components/BentoCard';
+import { CommandPalette } from './components/CommandPalette';
+import { SplitDrawer } from './components/SplitDrawer';
+import { ActionItem } from './types';
+
+export default function App() {
+  const [cmdPaletteOpen, setCmdPaletteOpen] = useState(false);
+  const [drawerOpen, setDrawerOpen] = useState(false);
+  const [activeCardId, setActiveCardId] = useState<string | null>(null);
+  const [hoveredCardContext, setHoveredCardContext] = useState<string>('global');
+
+  useEffect(() => {
+    const handleGlobalKeybinds = (e: KeyboardEvent) => {
+      if ((e.metaKey || e.ctrlKey) && e.key === 'k') {
+        e.preventDefault();
+        setCmdPaletteOpen((prev) => !prev);
+      }
+    };
+    window.addEventListener('keydown', handleGlobalKeybinds);
+    return () => window.removeEventListener('keydown', handleGlobalKeybinds);
+  }, []);
+
+  const cardItems = [
+    { id: '1', title: 'Generative Analytical Mesh Engine', subtitle: 'Analytics Core', size: 'large' as const },
+    { id: '2', title: 'System Configurations', subtitle: 'Runtime Config', size: 'small' as const },
+    { id: '3', title: 'Asymmetric Schema Logs', subtitle: 'Telemetry', size: 'medium' as const },
+    { id: '4', title: 'Layer Integrations', subtitle: 'Orchestration', size: 'small' as const },
+  ];
+
+  const activeCardData = useMemo(() => {
+    return cardItems.find(c => c.id === activeCardId) || null;
+  }, [activeCardId]);
+
+  const commandPaletteActions: ActionItem[] = [
+    { id: 'act-1', title: 'Initialize Analytics Deep Dive', category: 'Analytics Core', icon: <Activity className="w-4 h-4" />, shortcut: '⌘A', action: () => { setActiveCardId('1'); setDrawerOpen(true); } },
+    { id: 'act-2', title: 'Open System Variables Panel', category: 'Runtime Config', icon: <Settings className="w-4 h-4" />, shortcut: '⌘S', action: () => { setActiveCardId('2'); setDrawerOpen(true); } },
+    { id: 'act-3', title: 'Extract Telemetry CSV Data', category: 'Telemetry', icon: <TrendingUp className="w-4 h-4" />, action: () => alert('Download triggered.') },
+    { id: 'act-4', title: 'Purge Current Layer Schema cache', category: 'Orchestration', icon: <Layers2 className="w-4 h-4" />, action: () => console.log('Cache Purged.') },
+  ];
+
+  return (
+    <div className="relative min-h-screen bg-slate-950 text-white overflow-hidden flex flex-col p-4 md:p-8 font-sans antialiased">
+      <div className="absolute inset-0 pointer-events-none bg-[radial-gradient(#ffffff0a_1px,transparent_1px)] [background-size:24px_24px]" />
+
+      <header className="relative w-full max-w-2xl mx-auto mb-10 z-30 flex items-center justify-between px-5 py-3 border border-white/[0.06] bg-slate-900/40 backdrop-blur-xl rounded-full shadow-lg">
+        <div className="flex items-center space-x-3">
+          <div className="w-2.5 h-2.5 rounded-full bg-emerald-500 animate-pulse" />
+          <span className="text-xs font-semibold uppercase font-mono tracking-widest text-slate-300">Spatial.OS v2.4</span>
+        </div>
+        <button
+          onClick={() => setCmdPaletteOpen(true)}
+          className="flex items-center space-x-2 text-xs font-mono text-slate-400 hover:text-white px-3 py-1.5 rounded-full bg-white/5 border border-white/5 hover:border-white/10 transition"
+        >
+          <Command className="w-3 h-3" />
+          <span>⌘K Search parameters</span>
+        </button>
+      </header>
+
+      <main className="flex-1 w-full max-w-7xl mx-auto grid grid-cols-1 md:grid-cols-3 gap-6 auto-rows-auto relative z-10">
+        {cardItems.map((card) => (
+          <div 
+            key={card.id}
+            onMouseEnter={() => setHoveredCardContext(card.subtitle)}
+            onMouseLeave={() => setHoveredCardContext('global')}
+          >
+            <BentoCard
+              id={card.id} title={card.title} subtitle={card.subtitle} size={card.size}
+              onClick={() => { setActiveCardId(card.id); setDrawerOpen(true); }}
+            >
+              {card.id === '1' && (
+                <div className="w-full h-full bg-gradient-to-br from-indigo-500/10 to-purple-500/10 rounded-2xl border border-white/[0.04] p-4 flex flex-col justify-between">
+                  <div className="flex justify-between items-center text-xs font-mono text-slate-400">
+                    <span>NODE INDEX :: 0x7E3</span>
+                    <span className="text-emerald-400 font-semibold">98.4% EFFICIENCY</span>
+                  </div>
+                  <div className="w-full h-24 flex items-end space-x-2 pt-4">
+                    {[40, 70, 55, 90, 35, 80, 65].map((h, i) => (
+                      <motion.div 
+                        key={i} initial={{ height: 0 }} animate={{ height: `${h}%` }}
+                        transition={{ delay: i * 0.03, type: 'spring', damping: 15 }}
+                        className="flex-1 bg-indigo-500/30 rounded-t border-t border-indigo-400/40" 
+                      />
+                    ))}
+                  </div>
+                </div>
+              )}
+              {card.id === '3' && (
+                <div className="space-y-2 font-mono text-[11px] text-slate-400 bg-black/20 p-3 rounded-xl border border-white/5 h-full overflow-hidden">
+                  <div className="text-indigo-300">&gt; INITIALIZING SPATIAL_MATRIX</div>
+                  <div>&gt; FETCHING CORE CONTEXT... DONE</div>
+                  <div className="text-amber-400">&gt; WARNING: HIGH DATA DENSITY DETECTED</div>
+                </div>
+              )}
+            </BentoCard>
+          </div>
+        ))}
+      </main>
+
+      <CommandPalette
+        isOpen={cmdPaletteOpen} onClose={() => setCmdPaletteOpen(false)}
+        activeContext={hoveredCardContext} actions={commandPaletteActions}
+      />
+
+      <SplitDrawer isOpen={drawerOpen} onClose={() => setDrawerOpen(false)} activeCardData={activeCardData} />
+    </div>
+  );
+}
